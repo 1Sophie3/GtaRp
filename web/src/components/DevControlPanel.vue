@@ -12,7 +12,7 @@ const simulateNoData = ref(false);
 
 // Vordefinierte Test-Payloads
 const mockPayloads: Record<string, unknown> = {
-  Bank: { cash: 15000, bank: 350000, bankAccount: 'LS-88392' },
+  Bank: { cash: 15000, bankBalance: 350000, accountNumber: 'LS-88392', transactions: [] },
   Dealership: { vehicles: [{ model: 'T20', price: 2000000 }, { model: 'Zentorno', price: 750000 }] },
   Garage: { inGarageVehicles: [{ Id: 1, ModelName: 'Elegy', NumberPlate: 'DEV 1', Health: 1000 }], maxCapacity: 10 },
   House: { houseId: 12, name: 'Vinewood Villa', price: 850000 },

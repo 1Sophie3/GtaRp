@@ -3,8 +3,11 @@
 
  Das Bankmenü ist in zwei Tabs unterteilt: "Transaktionen" und "Kontoauszug".
  Im Tab "Transaktionen" können Spieler Geld einzahlen, abheben und Überweisungen tätigen. Im Tab "Kontoauszug" können Spieler ihre letzten Transaktionen einsehen.
- Die Kommunikation mit dem FiveM-Server erfolgt über NUI-Callbacks, die über die Funktion sendNuiCallback(eventName, data) gesendet werden. Die Daten werden als JSON-Objekt an den Server übermittelt.
+ Die Kommunikation mit dem FiveM-Server erfolgt über die zentrale NUI-Bridge (services/nui.ts).
  Die Funktion handleNuiMessage(event) empfängt Nachrichten vom Server und aktualisiert die Kontodaten und Transaktionen entsprechend. Das Menü kann über die Aktionen "openBank" und "closeBank" geöffnet und geschlossen werden.
+
+ TODO(backend): Das Fraktionskonto (isLeader/factionName/factionData/switchAccountType)
+ ist RAGE:MP-Altbestand ohne aktuelle Serverimplementierung. Siehe types/bank.ts.
 -->
 
 
@@ -145,31 +148,33 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { sendNuiCallback } from '../services/nui';
+import type { BankOpenPayload, BankTransaction, BankUpdateBalancesPayload } from '../types/bank';
 
 const isVisible = ref(false);
-const activeTab = ref('actions');
+const activeTab = ref<'actions' | 'history'>('actions');
 
 // Spieler- & Konto-Status
 const isLeader = ref(false);
 const factionName = ref('');
-const selectedAccountType = ref('private'); // 'private' oder 'faction'
+const selectedAccountType = ref<'private' | 'faction'>('private');
 
 // Kontodaten
 const cash = ref(0);
 const privateBankBalance = ref(0);
 const privateAccountNumber = ref('');
-const privateTransactions = ref([]);
+const privateTransactions = ref<BankTransaction[]>([]);
 
 const factionBankBalance = ref(0);
 const factionAccountNumber = ref('');
-const factionTransactions = ref([]);
+const factionTransactions = ref<BankTransaction[]>([]);
 
 // Input-Formulardaten
-const cashAmount = ref(null);
+const cashAmount = ref<number | null>(null);
 const transferAccount = ref('');
-const transferAmount = ref(null);
+const transferAmount = ref<number | null>(null);
 const transferDescription = ref('');
 
 // Dynamische Anzeige basierend auf ausgewähltem Kontotyp
@@ -180,20 +185,12 @@ const displayedTransactions = computed(() => selectedAccountType.value === 'fact
 const formattedCash = computed(() => `${cash.value}€`);
 const formattedBank = computed(() => `${bankBalance.value}€`);
 
-const formatDate = (dateString) => {
+const formatDate = (dateString: string) => {
   if (!dateString) return '';
   return new Date(dateString).toLocaleString('de-DE');
 };
 
-const sendNuiCallback = (eventName, data = {}) => {
-  fetch(`https://${GetParentResourceName()}/${eventName}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json; charset=UTF-8' },
-    body: JSON.stringify(data)
-  }).catch(() => {});
-};
-
-const switchAccountType = (type) => {
+const switchAccountType = (type: 'private' | 'faction') => {
   selectedAccountType.value = type;
   sendNuiCallback('bank:switchAccountType', { accountType: type });
 };
@@ -257,12 +254,12 @@ const handleTransfer = () => {
   transferDescription.value = '';
 };
 
-const handleNuiMessage = (event) => {
-  const { action, payload } = event.data;
+const handleNuiMessage = (event: MessageEvent) => {
+  const { action, payload } = (event.data || {}) as { action?: string; payload?: Partial<BankOpenPayload> & Partial<BankUpdateBalancesPayload> };
 
-  if (action === 'openBank') {
+  if (action === 'openBank' && payload) {
     cash.value = payload.cash || 0;
-    
+
     // Führungsstatus & Fraktions-Infos
     isLeader.value = payload.isLeader || false;
     factionName.value = payload.factionName || '';
@@ -283,9 +280,9 @@ const handleNuiMessage = (event) => {
     isVisible.value = true;
   } else if (action === 'closeBank') {
     isVisible.value = false;
-  } else if (action === 'updateBalances') {
-    cash.value = payload.cash;
-    privateBankBalance.value = payload.bankBalance;
+  } else if (action === 'updateBalances' && payload) {
+    cash.value = payload.cash ?? cash.value;
+    privateBankBalance.value = payload.bankBalance ?? privateBankBalance.value;
     if (payload.factionBankBalance !== undefined) {
       factionBankBalance.value = payload.factionBankBalance;
     }
