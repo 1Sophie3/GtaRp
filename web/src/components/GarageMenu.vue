@@ -64,30 +64,14 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
-
-interface Vehicle {
-  Id: number;
-  ModelName: string;
-  NumberPlate: string;
-  Health: number;
-}
-
-declare function GetParentResourceName(): string;
+import { sendNuiCallback } from '../services/nui';
+import type { GarageVehicle, GarageOpenPayload } from '../types/garage';
 
 const isVisible = ref(false);
 const activeTab = ref<'spawnTab' | 'storeTab'>('spawnTab');
-const inGarageVehicles = ref<Vehicle[]>([]);
-const nearbyParkableVehicles = ref<Vehicle[]>([]);
+const inGarageVehicles = ref<GarageVehicle[]>([]);
+const nearbyParkableVehicles = ref<GarageVehicle[]>([]);
 const maxCapacity = ref(0);
-
-const sendNuiCallback = (eventName: string, data: Record<string, unknown> = {}) => {
-  const resourceName = typeof GetParentResourceName === 'function' ? GetParentResourceName() : 'nui-mock';
-  fetch(`https://${resourceName}/${eventName}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json; charset=UTF-8' },
-    body: JSON.stringify(data)
-  }).catch(() => {});
-};
 
 const closeGarageUI = () => {
   isVisible.value = false;
@@ -103,7 +87,7 @@ const requestStoreVehicle = (vehId: number) => {
 };
 
 const handleNuiMessage = (event: MessageEvent) => {
-  const { action, payload } = event.data || {};
+  const { action, payload } = (event.data || {}) as { action?: string; payload?: Partial<GarageOpenPayload> };
   if (action === 'openGarage') {
     inGarageVehicles.value = payload?.inGarageVehicles || [];
     nearbyParkableVehicles.value = payload?.nearbyParkableVehicles || [];
