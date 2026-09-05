@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "TvygkJ+fTds=",
+  "success": true,
+  "projectFilePath": "C:\\code_new\\src\\server\\MyFramework.FiveM\\MyFramework.FiveM.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\katharina.hofer\\.nuget\\packages\\microsoft.netcore.platforms\\1.1.0\\microsoft.netcore.platforms.1.1.0.nupkg.sha512",
+    "C:\\Users\\katharina.hofer\\.nuget\\packages\\netstandard.library\\2.0.3\\netstandard.library.2.0.3.nupkg.sha512"
+  ],
+  "logs": []
+}

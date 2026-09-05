@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="MyFramework.Core/MyFramework.Core.csproj" />
+  <Project Path="MyFramework.FiveM/MyFramework.FiveM.csproj" />
+  <Project Path="MyFramework.Infrastructure/MyFramework.Infrastructure.csproj" />
+  <Project Path="MyFramework.Tests/MyFramework.Tests.csproj" />
+</Solution>
